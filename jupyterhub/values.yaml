@@ -128,6 +128,7 @@ proxy:
       http:
       https:
     loadBalancerIP:
+    loadBalancerSourceRanges: []
   chp:
     image:
       name: jupyterhub/configurable-http-proxy
@@ -301,7 +302,7 @@ scheduling:
     policy: {}
     image:
       name: gcr.io/google_containers/kube-scheduler-amd64
-      tag: v1.11.2
+      tag: v1.13.12
     nodeSelector: {}
     pdb:
       enabled: true
