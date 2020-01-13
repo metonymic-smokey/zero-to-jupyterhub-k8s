@@ -87,6 +87,7 @@ hub:
     enabled: true
     initialDelaySeconds: 0
     periodSeconds: 10
+  # existingSecret: existing-secret
 
 rbac:
   enabled: true
@@ -339,7 +340,7 @@ prePuller:
   pause:
     image:
       name: gcr.io/google_containers/pause
-      tag: '3.0'
+      tag: '3.1'
 
 
 ingress:
