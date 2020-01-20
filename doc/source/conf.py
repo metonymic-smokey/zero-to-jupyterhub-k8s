@@ -112,6 +112,26 @@ todo_include_todos = False
 
 html_theme = 'pandas_sphinx_theme'
 
+html_theme_options = {
+    "external_links": [
+        {
+            'url': "https://pandas.pydata.org/pandas-docs/stable/",
+            "name": "Pandas Docs"
+        }
+    ],
+    "github_url": "https://github.com/pandas-dev/pandas-sphinx-theme",
+    "twitter_url": "https://twitter.com/pandas_dev",
+    "use_edit_page_button": True
+}
+
+
+html_context = {
+    "github_user": "jupyterhub",
+    "github_repo": "zero-to-jupyterhub-k8s",
+    "github_version": "master",
+    "doc_path": "/doc",
+}
+
 html_favicon = '_static/images/logo/favicon.ico'
 html_logo = '_static/images/logo/logo.png'
 
