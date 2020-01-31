@@ -14,7 +14,7 @@ setup and shape your cluster.
 The Procedure
 =============
 
-#. Create a IAM Role
+#. Create an IAM Role
 
    This role will be used to give your CI host permission to create and destroy resources on AWS
 
@@ -40,35 +40,35 @@ The Procedure
 
 #. Choose a cluster name
 
-   Since we are not using pre-configured DNS we will use the suffix ".k8s.local".  Per the docs, if the DNS name ends in .k8s.local the cluster will use internal hosted DNS.
+   Since we are not using pre-configured DNS we will use the suffix ".k8s.local".  Per the docs, if the DNS name ends in .k8s.local the cluster will use internal hosted DNS.::
 
       export NAME=<somename>.k8s.local
 
-#. Setup an ssh keypair to use with the cluster
+#. Setup an ssh keypair to use with the cluster::
 
       ssh-keygen
 
-#. Create a S3 bucket to store your cluster configuration
+#. Create an S3 bucket to store your cluster configuration
 
    Since we are on AWS we can use a S3 backing store.  It is recommended to enabling versioning on the S3 bucket.
-   We don't need to pass this into the KOPS commands.  It is automatically detected by the kops tool as an env variable.
+   We don't need to pass this into the KOPS commands.  It is automatically detected by the kops tool as an env variable.::
 
-   ``export KOPS_STATE_STORE=s3://<your_s3_bucket_name_here>``
+      export KOPS_STATE_STORE=s3://<your_s3_bucket_name_here>
 
-#. Set the region to deploy in
+#. Set the region to deploy in::
 
-    export REGION=`curl -s http://169.254.169.254/latest/dynamic/instance-identity/document|grep region|awk -F\" '{print $4}'`
+      export REGION=`curl -s http://169.254.169.254/latest/dynamic/instance-identity/document|grep region|awk -F\" '{print $4}'`
 
-#. Install the AWS CLI:
+#. Install the AWS CLI:: 
 
-    sudo apt-get update
-    sudo apt-get install awscli
+      sudo apt-get update
+      sudo apt-get install awscli
 
 #. Set the availability zones for the nodes
 
    For this guide we will be allowing nodes to be deployed in all AZs::
 
-       export ZONES=$(aws ec2 describe-availability-zones --region $REGION | grep ZoneName | awk '{print $2}' | tr -d '"')
+      export ZONES=$(aws ec2 describe-availability-zones --region $REGION | grep ZoneName | awk '{print $2}' | tr -d '"')
 
 #. Create the cluster
 
@@ -123,13 +123,15 @@ The Procedure
 
 #. Wait for the cluster to start-up
 
-    Running the 'kops validate cluster' command will tell us what the current state of setup is.
+    Running the ``kops validate cluster`` command will tell us what the current state of setup is.
     If you see "can not get nodes" initially, just be patient as the cluster can't report until a
     few basic services are up and running.
 
-    Keep running 'kops validate cluster' until you see "Your cluster $NAME is ready" at the end of the output.
+    Keep running ``kops validate cluster`` until you see "Your cluster $NAME is ready" at the end of the output::
 
-    ``time until kops validate cluster; do sleep 15 ; done`` can be used to automate the waiting process.
+      time until kops validate cluster; do sleep 15 ; done
+      
+    can be used to automate the waiting process.
 
     If at any point you wish to destroy your cluster after this step, run ``kops delete cluster $NAME --yes``
 
@@ -137,8 +139,9 @@ The Procedure
 #. Confirm that ``kubectl`` is connected to your Kubernetes cluster.
 
     Run::
-
-       kubectl get nodes
+      
+      kubectl get nodes
+      
 
     You should see a list of two nodes, each beginning with ``ip``.
 
@@ -147,12 +150,14 @@ The Procedure
     * run the following on CI host: ``kops export kubecfg``
     * copy the contents of ``~/.kube/config`` to the same place on your local system
 
-    If you wish to put the kube config file in a different location, you will need to ``export KUBECONFIG=<other kube config location>``
+    If you wish to put the kube config file in a different location, you will need to run::
+    
+    export KUBECONFIG=<other kube config location>
 
 
 #. Configure ssh bastion (Skip this step if you did not go with the **--topology private** option above!)
 
-    Ideally we would simply be passing the --bastion flag into the kops command above.  However that flag is not functioning as intended at the moment.  https://github.com/kubernetes/kops/issues/2881
+    Ideally we would simply be passing the ``--bastion`` flag into the kops command above.  However that flag is not functioning as intended at the moment.  https://github.com/kubernetes/kops/issues/2881
 
     Instead we need to follow this guide: https://github.com/kubernetes/kops/blob/master/docs/examples/kops-tests-private-net-bastion-host.md#adding-a-bastion-host-to-our-cluster
 
@@ -177,9 +182,7 @@ The Procedure
         parameters:
           type: gp2
 
-    Next, run this command:
-
-        .. code-block:: bash
+    Next, run this command::
 
            kubectl apply -f storageclass.yml
 
@@ -187,6 +190,11 @@ The Procedure
     <https://kubernetes.io/docs/concepts/storage/persistent-volumes/#dynamic>`_ of
     disks, allowing us to automatically assign a disk per user when they log
     in to JupyterHub.
+
+    .. note::
+    EC2 instance metadata is data detailing configuring and running the running instance. This data is potentially sensitive and can be seen by anyone with direct access to the instance.
+    This metadata is blocked by an init-container by default since they override ``iptables`` used in setting up the instance. Setting up and securing access to this metadata can be done by adding an ``iptables`` rule in an init-container as shown `here <https://zero-to-jupyterhub.readthedocs.io/en/v0.5-doc/security.html>`_ in the cloud metadata security section.
+
 
 ==========
 Encryption
@@ -211,9 +219,7 @@ Instead of performing step 13 above. Create the following ``storageclass.yml`` f
 
 The main difference is the addition of the line `encrypted: "true"` and make note that `true` is in double quotes.
 
-Next run these commands:
-
-        .. code-block:: bash
+Next run these commands::
 
            kubectl delete storageclass gp2
            kubectl apply -f storageclass.yml
@@ -226,17 +232,13 @@ This will encrypt any dynamic volumes (such as your notebook)created by Kubernet
 In step 9 above, set up the cluster with weave by including the `--networking weave` flag in the `kops create` command above.
 Then perform the following steps:
 
-#. Verify weave is running:
-
-   .. code-block:: bash
+#. Verify weave is running::
 
       kubectl --namespace kube-system get pods
 
    You should see several pods of the form `weave-net-abcde`
 
-#.  Create Kubernetes secret with a private password of sufficient strength. A random 128 bytes is used in this example:
-
-    .. code-block:: bash
+#.  Create Kubernetes secret with a private password of sufficient strength. A random 128 bytes is used in this example::
 
         openssl rand -hex 128 >weave-passwd
         kubectl create secret -n kube-system generic weave-passwd --from-file=./weave-passwd
@@ -258,15 +260,13 @@ Then perform the following steps:
 
 #. Check to see that the pods are restarted. To expedite the process you can delete the old pods.
 
-#. You can verify encryption is turned on with the following command:
+#. You can verify encryption is turned on with the following command::
 
-    .. code-block:: bash
+      kubectl exec -n kube-system weave-net-<pod> -c weave -- /home/weave/weave --local status
 
-        kubectl exec -n kube-system weave-net-<pod> -c weave -- /home/weave/weave --local status
+   You should see `encryption: enabled`
 
-    You should see `encryption: enabled`
-
-    If you really want to insure encryption is working, you can listen on port `6783` of any node. If the traffic looks like gibberish, you know it is on.
+   If you really want to insure encryption is working, you can listen on port `6783` of any node. If the traffic looks like gibberish, you know it is on.
 
 ==============
 Shared Storage
